@@ -24,6 +24,7 @@ def _serialize(org_id: str, item: dict[str, Any] | None) -> dict[str, Any]:
         "orgId": org_id,
         "name": item.get("name") or "",
         "avatarUrl": create_download_url(org_id, item.get("avatarUrl")),
+        "defaultAmId": item.get("defaultAmId"),
     }
 
 
@@ -37,7 +38,8 @@ def handle_list_organizations() -> dict[str, Any]:
     # access pattern elsewhere in the app that needs "every org," so no GSI exists.
     result = _table.scan()
     orgs = [
-        {"orgId": item["orgId"], "name": item.get("name") or ""} for item in result.get("Items", [])
+        {"orgId": item["orgId"], "name": item.get("name") or "", "defaultAmId": item.get("defaultAmId")}
+        for item in result.get("Items", [])
     ]
     orgs.sort(key=lambda org: org["name"])
     return json_response(200, {"organizations": orgs})

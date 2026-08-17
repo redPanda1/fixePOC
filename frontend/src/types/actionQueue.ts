@@ -1,13 +1,9 @@
 export type ThreadEntryType = 'question' | 'action' | 'agent_proposal';
 
+// 'created'/'read' only ever occur on agent_proposal threads (gates the verdict flow).
+// question|action threads start at 'waiting_on_customer' - see backend status.py.
 export type ThreadStatus =
-  | 'created'
-  | 'read'
-  | 'in_progress'
-  | 'waiting_on_customer'
-  | 'waiting_on_internal'
-  | 'complete'
-  | 'archived';
+  'created' | 'read' | 'waiting_on_customer' | 'waiting_on_internal' | 'complete' | 'archived';
 
 export type MessageType = 'user' | 'system';
 

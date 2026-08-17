@@ -15,6 +15,23 @@ export default function StatusRail({ threads, activeFilter, onFilterChange }: St
         Status
       </Typography>
       <List dense disablePadding>
+        <ListItemButton
+          selected={activeFilter === null}
+          onClick={() => onFilterChange(null)}
+          sx={{ borderRadius: 1.5, mb: 0.5 }}
+        >
+          <ListItemText primary="All" />
+          <Box
+            sx={{
+              minWidth: 24,
+              textAlign: 'center',
+              fontWeight: 700,
+              color: activeFilter === null ? 'secondary.main' : 'text.secondary',
+            }}
+          >
+            {threads.length}
+          </Box>
+        </ListItemButton>
         {FILTER_BUCKETS.map((bucket) => {
           const count = threads.filter((thread) => bucket.statuses.includes(thread.status)).length;
           const active = activeFilter === bucket.key;

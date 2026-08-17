@@ -1,15 +1,20 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Box, Button, IconButton, Paper, Stack, Typography } from '@mui/material';
+import { Button, IconButton, Paper, Stack, Typography } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ChatPane from '../components/action-queue/ChatPane';
 import HistoryPanel from '../components/action-queue/HistoryPanel';
 import MessageComposer from '../components/action-queue/MessageComposer';
 import StatusBadge from '../components/action-queue/StatusBadge';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import { fetchThreadDetail, postMessage, selectThreadOption, transitionThreadStatus } from '../store/actionQueueSlice';
+import {
+  fetchThreadDetail,
+  postMessage,
+  selectThreadOption,
+  transitionThreadStatus,
+} from '../store/actionQueueSlice';
 
-const OPEN_STATUSES = new Set(['created', 'read', 'in_progress', 'waiting_on_customer', 'waiting_on_internal']);
+const TERMINAL_STATUSES = new Set(['complete', 'archived']);
 const POLL_INTERVAL_MS = 3000;
 
 export default function ActionQueueThreadPage() {
@@ -35,7 +40,7 @@ export default function ActionQueueThreadPage() {
   }, [threadId, dispatch]);
 
   useEffect(() => {
-    if (!threadId || !threadStatus || !OPEN_STATUSES.has(threadStatus)) return;
+    if (!threadId || !threadStatus || TERMINAL_STATUSES.has(threadStatus)) return;
     const intervalId = setInterval(() => {
       if (actionStatusRef.current !== 'loading') {
         void dispatch(fetchThreadDetail(threadId));
@@ -57,10 +62,20 @@ export default function ActionQueueThreadPage() {
   return (
     <Paper
       elevation={0}
-      sx={{ p: 4, border: '1px solid #e3e7eb', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 160px)' }}
+      sx={{
+        p: 4,
+        border: '1px solid #e3e7eb',
+        display: 'flex',
+        flexDirection: 'column',
+        height: 'calc(100vh - 160px)',
+      }}
     >
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1 }}>
-        <IconButton size="small" onClick={() => navigate('/action-queue')} aria-label="Back to Action Queue">
+        <IconButton
+          size="small"
+          onClick={() => navigate('/action-queue')}
+          aria-label="Back to Action Queue"
+        >
           <ArrowBackRoundedIcon fontSize="small" />
         </IconButton>
         <Typography variant="h5" sx={{ fontWeight: 700, flexGrow: 1 }}>
@@ -95,17 +110,18 @@ export default function ActionQueueThreadPage() {
       )}
 
       {isAdmin && thread.entryType !== 'agent_proposal' && !isClosed && (
-        <Box sx={{ pt: 2 }}>
+        <Stack direction="row" spacing={1} sx={{ pt: 2 }}>
           <Button
             variant="outlined"
             color="secondary"
             size="small"
-            disabled={thread.status === 'created' || thread.status === 'read'}
-            onClick={() => void dispatch(transitionThreadStatus({ threadId, payload: { status: 'complete' } }))}
+            onClick={() =>
+              void dispatch(transitionThreadStatus({ threadId, payload: { status: 'complete' } }))
+            }
           >
             Mark Complete
           </Button>
-        </Box>
+        </Stack>
       )}
 
       <HistoryPanel events={thread.events} />

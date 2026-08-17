@@ -1,9 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Button, Paper, Stack, Typography } from '@mui/material';
+import { Button, FormControlLabel, Paper, Stack, Switch, Typography } from '@mui/material';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
+import { useSearchParams } from 'react-router-dom';
+import NewQuestionDialog from '../components/action-queue/NewQuestionDialog';
 import ThreadList from '../components/action-queue/ThreadList';
 import StatusRail from '../components/action-queue/StatusRail';
-import { statusesForFilter, type StatusFilterKey } from '../components/action-queue/statusUtils';
+import {
+  FILTER_BUCKETS,
+  isCustomerThreadOpen,
+  statusesForFilter,
+  type StatusFilterKey,
+} from '../components/action-queue/statusUtils';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchThreads } from '../store/actionQueueSlice';
 import { LIST_ORGANIZATIONS } from '../store/organizationSlice';
@@ -16,7 +24,14 @@ export default function ActionQueuePage() {
   const listStatus = useAppSelector((state) => state.actionQueue.listStatus);
   const organizations = useAppSelector((state) => state.organization.organizations);
   const organizationsListStatus = useAppSelector((state) => state.organization.listStatus);
-  const [filter, setFilter] = useState<StatusFilterKey | null>(null);
+  const [searchParams] = useSearchParams();
+  const initialFilterParam = searchParams.get('filter');
+  const [filter, setFilter] = useState<StatusFilterKey | null>(() => {
+    const bucket = FILTER_BUCKETS.find((b) => b.key === initialFilterParam);
+    return bucket?.key ?? null;
+  });
+  const [showAllForCustomer, setShowAllForCustomer] = useState(() => initialFilterParam === 'all');
+  const [newQuestionOpen, setNewQuestionOpen] = useState(false);
 
   useEffect(() => {
     void dispatch(fetchThreads());
@@ -28,7 +43,13 @@ export default function ActionQueuePage() {
     }
   }, [dispatch, isAdmin, organizationsListStatus]);
 
-  const visibleThreads = filter ? threads.filter((thread) => statusesForFilter(filter).includes(thread.status)) : threads;
+  const visibleThreads = isAdmin
+    ? filter
+      ? threads.filter((thread) => statusesForFilter(filter).includes(thread.status))
+      : threads
+    : showAllForCustomer
+      ? threads
+      : threads.filter((thread) => isCustomerThreadOpen(thread.status));
 
   return (
     <Stack direction="row" spacing={3} sx={{ alignItems: 'flex-start' }}>
@@ -37,21 +58,54 @@ export default function ActionQueuePage() {
           <Typography variant="h4" sx={{ fontWeight: 700 }}>
             Action Queue
           </Typography>
-          <Button
-            variant="outlined"
-            color="secondary"
-            startIcon={<RefreshRoundedIcon />}
-            loading={listStatus === 'loading'}
-            onClick={() => void dispatch(fetchThreads())}
-          >
-            Refresh
-          </Button>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+            {!isAdmin && (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={showAllForCustomer}
+                    onChange={(event) => setShowAllForCustomer(event.target.checked)}
+                  />
+                }
+                label="Show completed"
+              />
+            )}
+            <Button
+              variant="outlined"
+              color="secondary"
+              startIcon={<RefreshRoundedIcon />}
+              loading={listStatus === 'loading'}
+              onClick={() => void dispatch(fetchThreads())}
+            >
+              Refresh
+            </Button>
+            {isAdmin && (
+              <Button
+                variant="contained"
+                color="secondary"
+                startIcon={<AddRoundedIcon />}
+                onClick={() => setNewQuestionOpen(true)}
+              >
+                New question
+              </Button>
+            )}
+          </Stack>
         </Stack>
 
         <ThreadList threads={visibleThreads} organizations={organizations} variant={isAdmin ? 'am' : 'customer'} />
       </Paper>
 
       {isAdmin && <StatusRail threads={threads} activeFilter={filter} onFilterChange={setFilter} />}
+
+      {isAdmin && (
+        <NewQuestionDialog
+          open={newQuestionOpen}
+          onClose={() => {
+            setNewQuestionOpen(false);
+            void dispatch(fetchThreads());
+          }}
+        />
+      )}
     </Stack>
   );
 }

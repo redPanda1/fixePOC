@@ -41,7 +41,7 @@ def handle_create_thread(person_id: str, groups: list[str], body: dict[str, Any]
         "actorId": person_id,
         "eventType": "created",
         "fromValue": None,
-        "toValue": "created",
+        "toValue": "waiting_on_customer",
         "createdAt": now,
     }
     item = {
@@ -50,7 +50,9 @@ def handle_create_thread(person_id: str, groups: list[str], body: dict[str, Any]
         "orgId": org_id,
         "createdById": person_id,
         "assignedToId": assigned_to_id,
-        "status": "created",
+        # The AM's first message is what creates the thread, so it starts already
+        # waiting on the customer - see status.py for the simplified state machine.
+        "status": "waiting_on_customer",
         "subject": subject,
         "lastMessagePreview": content[:140],
         "proposal": None,

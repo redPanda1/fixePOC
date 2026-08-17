@@ -3,11 +3,12 @@ class InvalidTransitionError(Exception):
 
 
 _QUESTION_ACTION_TRANSITIONS = {
-    "created": {"read"},
-    "read": {"in_progress"},
-    "in_progress": {"waiting_on_customer", "waiting_on_internal", "complete"},
-    "waiting_on_customer": {"in_progress", "waiting_on_internal", "complete"},
-    "waiting_on_internal": {"in_progress", "waiting_on_customer", "complete"},
+    # No "created"/"read"/"in_progress" for question|action threads - the AM's first
+    # message is always the thing that creates the thread, so it starts life already
+    # waiting on the customer. Simplified for the POC; agent_proposal keeps its own
+    # created->read->complete machine below, where "read" gates the verdict flow.
+    "waiting_on_customer": {"waiting_on_internal", "complete"},
+    "waiting_on_internal": {"waiting_on_customer", "complete"},
     "complete": {"archived"},
     "archived": set(),
 }
@@ -42,13 +43,10 @@ def status_after_message(entry_type: str, current_status: str, actor_role: str) 
     if current_status in {"complete", "archived"}:
         raise InvalidTransitionError("Thread is closed; it cannot receive new messages")
     target = "waiting_on_customer" if actor_role == "am" else "waiting_on_internal"
-    # created/read collapse straight through in_progress into the waiting_* target in
-    # one hop, so a single message-send action produces a single status write / event.
-    if current_status in {"created", "read"}:
-        assert_transition_allowed(entry_type, current_status, "in_progress")
-        current_status = "in_progress"
-    if current_status == "in_progress":
-        assert_transition_allowed(entry_type, "in_progress", target)
+    if current_status == target:
+        # e.g. the AM sends a second message before the customer has replied - the
+        # thread is already waiting on the other party, so this is a no-op, not a
+        # transition (the transition table has no self-loops for waiting_on_*).
         return target
     assert_transition_allowed(entry_type, current_status, target)
     return target
