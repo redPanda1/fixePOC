@@ -49,7 +49,10 @@ export default function ReceiptHistoryTable() {
   const navigate = useNavigate();
   const items = useAppSelector((state) => state.receipts.items);
   const deletingId = useAppSelector((state) => state.receipts.deletingId);
+  const organizations = useAppSelector((state) => state.organization.organizations);
   const [pendingDelete, setPendingDelete] = useState<ReceiptSummary | null>(null);
+
+  const orgNameById = new Map(organizations.map((org) => [org.orgId, org.name]));
 
   const confirmDelete = () => {
     if (pendingDelete) {
@@ -75,6 +78,7 @@ export default function ReceiptHistoryTable() {
             <TableRow>
               <TableCell />
               <TableCell>Vendor</TableCell>
+              <TableCell>Customer</TableCell>
               <TableCell>Receipt date</TableCell>
               <TableCell align="right">Total</TableCell>
               <TableCell>Status</TableCell>
@@ -116,6 +120,7 @@ export default function ReceiptHistoryTable() {
                   )}
                 </TableCell>
                 <TableCell>{item.vendor ?? item.originalFileName}</TableCell>
+                <TableCell>{orgNameById.get(item.orgId) ?? '—'}</TableCell>
                 <TableCell>{formatReceiptDate(item.receiptDate)}</TableCell>
                 <TableCell align="right">
                   {item.totalAmount ? `${item.totalAmount}${item.currency ? ` ${item.currency}` : ''}` : '—'}

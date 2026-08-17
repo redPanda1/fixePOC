@@ -6,17 +6,25 @@ import ReceiptHistoryTable from '../components/receipts/ReceiptHistoryTable';
 import ReceiptUploadDialog from '../components/receipts/ReceiptUploadDialog';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchReceipts } from '../store/receiptsSlice';
+import { LIST_ORGANIZATIONS } from '../store/organizationSlice';
 
 export default function ReceiptsPage() {
   const dispatch = useAppDispatch();
   const [dialogOpen, setDialogOpen] = useState(false);
   const listStatus = useAppSelector((state) => state.receipts.listStatus);
+  const organizationsListStatus = useAppSelector((state) => state.organization.listStatus);
 
   useEffect(() => {
     if (listStatus === 'idle') {
       void dispatch(fetchReceipts());
     }
   }, [dispatch, listStatus]);
+
+  useEffect(() => {
+    if (organizationsListStatus === 'idle') {
+      void dispatch(LIST_ORGANIZATIONS());
+    }
+  }, [dispatch, organizationsListStatus]);
 
   return (
     <Paper elevation={0} sx={{ p: 4, border: '1px solid #e3e7eb' }}>

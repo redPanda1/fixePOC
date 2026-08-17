@@ -203,6 +203,12 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /avatars/upload-url
             Method: post
+        ListOrganizations:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /organizations
+            Method: get
 
   FixeChatSessionsBucket:
     Type: AWS::S3::Bucket
@@ -290,11 +296,25 @@ Resources:
           AttributeType: S
         - AttributeName: receiptId
           AttributeType: S
+        - AttributeName: orgId
+          AttributeType: S
       KeySchema:
         - AttributeName: personId
           KeyType: HASH
         - AttributeName: receiptId
           KeyType: RANGE
+      # Lets the Action Queue feature (and any AM tooling) look up "this org's
+      # receipts" directly - receipts were previously only reachable by the
+      # uploading person's own personId, with no org attribution at all.
+      GlobalSecondaryIndexes:
+        - IndexName: OrgIndex
+          KeySchema:
+            - AttributeName: orgId
+              KeyType: HASH
+            - AttributeName: receiptId
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
 
   ReceiptsFunction:
     # requirements.txt includes Pillow (thumbnail generation), a compiled dependency.

@@ -32,6 +32,17 @@ def handle_get_organization(org_id: str) -> dict[str, Any]:
     return json_response(200, _serialize(org_id, result.get("Item")))
 
 
+def handle_list_organizations() -> dict[str, Any]:
+    # Table is tiny at POC scale, so a full Scan is acceptable here - there's no
+    # access pattern elsewhere in the app that needs "every org," so no GSI exists.
+    result = _table.scan()
+    orgs = [
+        {"orgId": item["orgId"], "name": item.get("name") or ""} for item in result.get("Items", [])
+    ]
+    orgs.sort(key=lambda org: org["name"])
+    return json_response(200, {"organizations": orgs})
+
+
 def handle_update_organization(org_id: str, payload: dict[str, Any]) -> dict[str, Any]:
     try:
         name = validate_name(payload.get("name"), "name", 200)

@@ -16,6 +16,10 @@ from storage import (
 
 
 def handle_create(person_id: str, body: dict[str, Any]) -> dict[str, Any]:
+    org_id = body.get("orgId")
+    if not isinstance(org_id, str) or not org_id.strip():
+        return json_response(400, {"message": "Request body must include a non-empty 'orgId'."})
+
     image_payload = body.get("image")
     if image_payload is None:
         return json_response(400, {"message": "Request body must include an 'image' object."})
@@ -48,6 +52,7 @@ def handle_create(person_id: str, body: dict[str, Any]) -> dict[str, Any]:
     record: dict[str, Any] = {
         "personId": person_id,
         "receiptId": receipt_id,
+        "orgId": org_id.strip(),
         "createdAt": now,
         "updatedAt": now,
         "s3Key": key,

@@ -11,6 +11,7 @@ def _thumbnail_url(record: dict[str, Any]) -> str | None:
 def serialize_receipt(record: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": record["receiptId"],
+        "orgId": record.get("orgId"),
         "createdAt": record.get("createdAt"),
         "updatedAt": record.get("updatedAt"),
         "contentType": record.get("contentType"),
@@ -33,6 +34,7 @@ def serialize_receipt(record: dict[str, Any]) -> dict[str, Any]:
 def serialize_receipt_summary(record: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": record["receiptId"],
+        "orgId": record.get("orgId"),
         "vendor": record.get("vendor"),
         "totalAmount": record.get("totalAmount"),
         "currency": record.get("currency"),

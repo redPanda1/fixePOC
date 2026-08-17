@@ -1,8 +1,13 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
-import { fetchOrganization, updateOrganization, type UpdateOrganizationPayload } from '../apis/endpoints';
+import {
+  fetchOrganization,
+  listOrganizations,
+  updateOrganization,
+  type UpdateOrganizationPayload,
+} from '../apis/endpoints';
 import type { ApiError } from '../types/api';
-import type { Organization } from '../types/organization';
+import type { Organization, OrganizationSummary } from '../types/organization';
 import { LOGOUT } from './authSlice';
 
 type AsyncStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
@@ -11,6 +16,8 @@ interface OrganizationState {
   organization: Organization | null;
   status: AsyncStatus;
   updateStatus: AsyncStatus;
+  organizations: OrganizationSummary[];
+  listStatus: AsyncStatus;
   error: string | null;
 }
 
@@ -18,6 +25,8 @@ const initialState: OrganizationState = {
   organization: null,
   status: 'idle',
   updateStatus: 'idle',
+  organizations: [],
+  listStatus: 'idle',
   error: null,
 };
 
@@ -43,6 +52,17 @@ export const UPDATE_ORGANIZATION = createAsyncThunk<
   }
   return result.data;
 });
+
+export const LIST_ORGANIZATIONS = createAsyncThunk<OrganizationSummary[], void, { rejectValue: ApiError }>(
+  'organization/listOrganizations',
+  async (_, { rejectWithValue }) => {
+    const result = await listOrganizations();
+    if (!result.ok) {
+      return rejectWithValue(result.error);
+    }
+    return result.data.organizations;
+  },
+);
 
 const organizationSlice = createSlice({
   name: 'organization',
@@ -73,10 +93,23 @@ const organizationSlice = createSlice({
         state.updateStatus = 'failed';
         state.error = action.payload?.message ?? 'Organization could not be saved.';
       })
+      .addCase(LIST_ORGANIZATIONS.pending, (state) => {
+        state.listStatus = 'loading';
+      })
+      .addCase(LIST_ORGANIZATIONS.fulfilled, (state, action) => {
+        state.listStatus = 'succeeded';
+        state.organizations = action.payload;
+      })
+      .addCase(LIST_ORGANIZATIONS.rejected, (state, action) => {
+        state.listStatus = 'failed';
+        state.error = action.payload?.message ?? 'Organizations could not be loaded.';
+      })
       .addCase(LOGOUT, (state) => {
         state.organization = null;
         state.status = 'idle';
         state.updateStatus = 'idle';
+        state.organizations = [];
+        state.listStatus = 'idle';
         state.error = null;
       });
   },

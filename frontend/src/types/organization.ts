@@ -3,3 +3,8 @@ export interface Organization {
   name: string;
   avatarUrl: string | null;
 }
+
+export interface OrganizationSummary {
+  orgId: string;
+  name: string;
+}

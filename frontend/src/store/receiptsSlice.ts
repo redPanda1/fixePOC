@@ -101,6 +101,7 @@ const receiptsSlice = createSlice({
         state.items = [
           {
             id: action.payload.id,
+            orgId: action.payload.orgId,
             vendor: action.payload.vendor,
             totalAmount: action.payload.totalAmount,
             currency: action.payload.currency,

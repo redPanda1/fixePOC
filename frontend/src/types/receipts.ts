@@ -27,6 +27,7 @@ export interface ReceiptAnalysisError {
 
 export interface ReceiptSummary {
   id: string;
+  orgId: string;
   vendor: string | null;
   totalAmount: string | null;
   currency: string | null;
@@ -49,6 +50,7 @@ export interface ReceiptRecord extends ReceiptSummary {
 }
 
 export interface CreateReceiptRequest {
+  orgId: string;
   image: {
     file_name: string;
     content_type: 'image/jpeg' | 'image/png' | 'image/webp';

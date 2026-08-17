@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import type { Organization } from '../types/organization';
+import type { Organization, OrganizationSummary } from '../types/organization';
 import type { Person } from '../types/person';
 import type {
   CreateReceiptRequest,
@@ -39,6 +39,14 @@ export interface UpdateOrganizationPayload {
 
 export function updateOrganization(payload: UpdateOrganizationPayload) {
   return apiRequest<Organization>('/organization', { method: 'PUT', body: payload });
+}
+
+export interface ListOrganizationsResponse {
+  organizations: OrganizationSummary[];
+}
+
+export function listOrganizations() {
+  return apiRequest<ListOrganizationsResponse>('/organizations', { method: 'GET' });
 }
 
 export interface CreateAvatarUploadUrlPayload {

@@ -8,8 +8,13 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   Typography,
+  type SelectChangeEvent,
 } from '@mui/material';
 import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 import { useNavigate } from 'react-router-dom';
@@ -41,8 +46,10 @@ export default function ReceiptUploadDialog({ open, onClose }: ReceiptUploadDial
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const uploadStatus = useAppSelector((state) => state.receipts.uploadStatus);
+  const organizations = useAppSelector((state) => state.organization.organizations);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedOrgId, setSelectedOrgId] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -56,6 +63,7 @@ export default function ReceiptUploadDialog({ open, onClose }: ReceiptUploadDial
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setSelectedFile(null);
     setPreviewUrl(null);
+    setSelectedOrgId('');
     setValidationError(null);
     setSubmitError(null);
   };
@@ -88,12 +96,13 @@ export default function ReceiptUploadDialog({ open, onClose }: ReceiptUploadDial
   };
 
   const handleAnalyze = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || !selectedOrgId) return;
     setSubmitError(null);
     const dataBase64 = await fileToBase64(selectedFile);
     try {
       const receipt = await dispatch(
         uploadReceipt({
+          orgId: selectedOrgId,
           image: {
             file_name: selectedFile.name,
             content_type: selectedFile.type as 'image/jpeg' | 'image/png' | 'image/webp',
@@ -119,6 +128,22 @@ export default function ReceiptUploadDialog({ open, onClose }: ReceiptUploadDial
           <Typography color="text.secondary">
             Upload a receipt image to extract the vendor, total, and line items automatically.
           </Typography>
+
+          <FormControl fullWidth size="small" disabled={uploading}>
+            <InputLabel id="receipt-customer-label">Customer</InputLabel>
+            <Select
+              labelId="receipt-customer-label"
+              label="Customer"
+              value={selectedOrgId}
+              onChange={(event: SelectChangeEvent) => setSelectedOrgId(event.target.value)}
+            >
+              {organizations.map((org) => (
+                <MenuItem key={org.orgId} value={org.orgId}>
+                  {org.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
             <Button
@@ -165,7 +190,7 @@ export default function ReceiptUploadDialog({ open, onClose }: ReceiptUploadDial
         <Button
           variant="contained"
           color="secondary"
-          disabled={!selectedFile || uploading}
+          disabled={!selectedFile || !selectedOrgId || uploading}
           onClick={() => void handleAnalyze()}
           startIcon={uploading ? <CircularProgress size={18} color="inherit" /> : undefined}
         >
