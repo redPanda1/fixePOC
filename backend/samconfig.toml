@@ -1,0 +1,14 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "fixeTest"
+resolve_s3 = true
+s3_prefix = "fixeTest"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "StageName=\"dev\" ClaudeModelId=\"us.anthropic.claude-sonnet-4-5-20250929-v1:0\" NovaModelId=\"us.amazon.nova-lite-v1:0\""
+image_repositories = []
+profile = "shPersonal"
+
+[default.global.parameters]
+region = "us-east-1"

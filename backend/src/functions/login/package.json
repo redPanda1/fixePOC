@@ -1,0 +1,15 @@
+{
+  "name": "login-function",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1109.0",
+    "@aws-sdk/lib-dynamodb": "^3.1109.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.162",
+    "@types/node": "^26.2.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  }
+}

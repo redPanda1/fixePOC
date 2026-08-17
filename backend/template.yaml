@@ -1,0 +1,373 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: FIXE POC backend - Cognito auth, fixePerson table, /login API
+
+Parameters:
+  StageName:
+    Type: String
+    Default: dev
+  ClaudeModelId:
+    Type: String
+    Default: us.anthropic.claude-sonnet-4-5-20250929-v1:0
+    Description: >-
+      Bedrock cross-region inference profile ID for the chat agent (Claude 4.x/5.x
+      models on Bedrock only support invocation via an inference profile, not the
+      bare foundation-model ID). Verify this is enabled under Bedrock -> Model
+      access in the target region/account before deploying.
+  NovaModelId:
+    Type: String
+    Default: us.amazon.nova-lite-v1:0
+    Description: >-
+      Bedrock cross-region inference profile ID for the first-pass (cheap) receipt
+      analysis model. Verify this is enabled under Bedrock -> Model access in the
+      target region/account before deploying.
+
+Globals:
+  Function:
+    Runtime: nodejs24.x
+    Architectures: [arm64]
+    Timeout: 10
+    MemorySize: 256
+
+Resources:
+  FixeUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub fixe-${StageName}-user-pool
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+      Schema:
+        - Name: email
+          Required: true
+          Mutable: true
+        - Name: personId
+          AttributeDataType: String
+          Mutable: true
+        - Name: orgId
+          AttributeDataType: String
+          Mutable: true
+
+  FixeAdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: admin
+      UserPoolId: !Ref FixeUserPool
+      Description: Administrators with access to admin screens
+
+  FixeUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub fixe-${StageName}-web-client
+      UserPoolId: !Ref FixeUserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+      PreventUserExistenceErrors: ENABLED
+
+  FixePersonTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: fixePerson
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: personId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: personId
+          KeyType: HASH
+
+  FixeOrganizationTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: fixeOrganization
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: orgId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: orgId
+          KeyType: HASH
+
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Ref StageName
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowHeaders:
+          - authorization
+          - content-type
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+      Auth:
+        Authorizers:
+          CognitoAuthorizer:
+            JwtConfiguration:
+              issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${FixeUserPool}
+              audience:
+                - !Ref FixeUserPoolClient
+            IdentitySource: $request.header.Authorization
+        DefaultAuthorizer: CognitoAuthorizer
+
+  LoginFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2022
+        Sourcemap: false
+        EntryPoints:
+          - index.ts
+    Properties:
+      CodeUri: src/functions/login/
+      Handler: index.handler
+      Environment:
+        Variables:
+          PERSON_TABLE_NAME: !Ref FixePersonTable
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref FixePersonTable
+      Events:
+        LoginApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /login
+            Method: get
+
+  ProfileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: python3.13
+      Timeout: 10
+      MemorySize: 256
+      CodeUri: src/functions/profile/
+      Handler: index.handler
+      Environment:
+        Variables:
+          PERSON_TABLE_NAME: !Ref FixePersonTable
+          ORGANIZATION_TABLE_NAME: !Ref FixeOrganizationTable
+          AVATARS_BUCKET: !Ref FixeReceiptsBucket
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref FixePersonTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref FixeOrganizationTable
+        - S3CrudPolicy:
+            BucketName: !Ref FixeReceiptsBucket
+      Events:
+        GetPerson:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /person
+            Method: get
+        UpdatePerson:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /person
+            Method: put
+        GetOrganization:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /organization
+            Method: get
+        UpdateOrganization:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /organization
+            Method: put
+        CreateAvatarUploadUrl:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /avatars/upload-url
+            Method: post
+
+  FixeChatSessionsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  ChatFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: python3.13
+      Timeout: 30
+      MemorySize: 512
+      CodeUri: src/functions/chat/
+      Handler: index.handler
+      Environment:
+        Variables:
+          SESSION_BUCKET: !Ref FixeChatSessionsBucket
+          CLAUDE_MODEL_ID: !Ref ClaudeModelId
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref FixeChatSessionsBucket
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+                - bedrock:InvokeModelWithResponseStream
+              Resource:
+                # Cross-region inference profiles (the "us." prefix) fan requests out to
+                # multiple underlying regions, so both the profile and the regional
+                # foundation-model resources need to be permitted.
+                - arn:aws:bedrock:*::foundation-model/anthropic.*
+                - !Sub arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/*
+      Events:
+        ChatApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /chat
+            Method: post
+
+  FixeReceiptsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      # Needed for the avatar feature's presigned PUT uploads, which go straight from
+      # the browser to S3 (unlike receipts, which upload base64 through the Lambda) -
+      # a cross-origin PUT with a Content-Type header triggers a CORS preflight that
+      # only the bucket itself (not API Gateway) can satisfy.
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - "*"
+            AllowedMethods:
+              - GET
+              - PUT
+            AllowedHeaders:
+              - "*"
+            ExposedHeaders:
+              - ETag
+            MaxAge: 3000
+
+  FixeReceiptsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: fixeReceipts
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: personId
+          AttributeType: S
+        - AttributeName: receiptId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: personId
+          KeyType: HASH
+        - AttributeName: receiptId
+          KeyType: RANGE
+
+  ReceiptsFunction:
+    # requirements.txt includes Pillow (thumbnail generation), a compiled dependency.
+    # Build with `sam build --use-container` so the installed wheel matches the
+    # function's arm64 architecture (inherited from Globals) instead of the host machine's.
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: python3.13
+      Timeout: 60
+      MemorySize: 1024
+      CodeUri: src/functions/receipts/
+      Handler: index.handler
+      Environment:
+        Variables:
+          RECEIPTS_BUCKET: !Ref FixeReceiptsBucket
+          RECEIPTS_TABLE: !Ref FixeReceiptsTable
+          NOVA_MODEL_ID: !Ref NovaModelId
+          CLAUDE_MODEL_ID: !Ref ClaudeModelId
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref FixeReceiptsBucket
+        - DynamoDBCrudPolicy:
+            TableName: !Ref FixeReceiptsTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+                - bedrock:InvokeModelWithResponseStream
+              Resource:
+                # Cross-region inference profiles (the "us." prefix) fan requests out to
+                # multiple underlying regions, so both the profile and the regional
+                # foundation-model resources need to be permitted.
+                - arn:aws:bedrock:*::foundation-model/anthropic.*
+                - arn:aws:bedrock:*::foundation-model/amazon.nova*
+                - !Sub arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/*
+      Events:
+        CreateReceipt:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /receipts
+            Method: post
+        ListReceipts:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /receipts
+            Method: get
+        GetReceipt:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /receipts/{id}
+            Method: get
+        DeleteReceipt:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /receipts/{id}
+            Method: delete
+
+Outputs:
+  UserPoolId:
+    Value: !Ref FixeUserPool
+  UserPoolClientId:
+    Value: !Ref FixeUserPoolClient
+  HttpApiUrl:
+    Value: !Sub https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}
+  PersonTableName:
+    Value: !Ref FixePersonTable
+  OrganizationTableName:
+    Value: !Ref FixeOrganizationTable
+  ReceiptsBucketName:
+    Value: !Ref FixeReceiptsBucket
+  ReceiptsTableName:
+    Value: !Ref FixeReceiptsTable
