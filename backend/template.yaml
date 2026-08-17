@@ -376,6 +376,74 @@ Resources:
             Path: /receipts/{id}
             Method: delete
 
+  # Single-table design: Thread, Message, ThreadEvent, and AgentProposal all live on
+  # one item per thread (messages/events as nested list attributes, appended via
+  # list_append) - they're always read together with their thread, and DynamoDB has
+  # no cheap way to join across tables. See docs/action-queue-mapping.md.
+  FixeActionQueueThreadTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: fixeActionQueueThread
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: threadId
+          AttributeType: S
+        - AttributeName: assignedToId
+          AttributeType: S
+        - AttributeName: orgId
+          AttributeType: S
+        - AttributeName: updatedAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: threadId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: AssignedToIndex
+          KeySchema:
+            - AttributeName: assignedToId
+              KeyType: HASH
+            - AttributeName: updatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: OrgIndex
+          KeySchema:
+            - AttributeName: orgId
+              KeyType: HASH
+            - AttributeName: updatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  ActionQueueFunction:
+    # Routes are wired up in a later change - this deploys the function and its data
+    # access first, following the same phased approach as the receipts org-linkage fix.
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: python3.13
+      Timeout: 10
+      MemorySize: 256
+      CodeUri: src/functions/actionqueue/
+      Handler: index.handler
+      Environment:
+        Variables:
+          THREAD_TABLE_NAME: !Ref FixeActionQueueThreadTable
+          PERSON_TABLE_NAME: !Ref FixePersonTable
+          ORGANIZATION_TABLE_NAME: !Ref FixeOrganizationTable
+          RECEIPTS_TABLE: !Ref FixeReceiptsTable
+          RECEIPTS_BUCKET: !Ref FixeReceiptsBucket
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref FixeActionQueueThreadTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref FixePersonTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref FixeOrganizationTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref FixeReceiptsTable
+        - S3ReadPolicy:
+            BucketName: !Ref FixeReceiptsBucket
+
 Outputs:
   UserPoolId:
     Value: !Ref FixeUserPool
