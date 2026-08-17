@@ -12,7 +12,7 @@ import type {
   ThreadResponse,
 } from '../types/actionQueue';
 import type { Organization, OrganizationSummary } from '../types/organization';
-import type { Person } from '../types/person';
+import type { CommunicationPreference, Person } from '../types/person';
 import type {
   CreateReceiptRequest,
   CreateReceiptResponse,
@@ -33,6 +33,7 @@ export interface UpdatePersonPayload {
   firstName: string;
   lastName: string;
   avatarUrl?: string;
+  communicationPreferences?: CommunicationPreference[];
 }
 
 export function updatePerson(payload: UpdatePersonPayload) {

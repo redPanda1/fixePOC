@@ -6,7 +6,7 @@ import boto3
 
 from avatar_storage import create_download_url
 from responses import json_response
-from validation import ValidationError, validate_name
+from validation import ValidationError, validate_communication_preferences, validate_name
 
 PERSON_TABLE_NAME = os.environ["PERSON_TABLE_NAME"]
 
@@ -27,6 +27,7 @@ def _serialize(item: dict[str, Any], org_id: str, groups: list[str]) -> dict[str
         **item,
         "avatarUrl": create_download_url(org_id, item.get("avatarUrl")),
         "userType": _user_type(groups),
+        "communicationPreferences": item.get("communicationPreferences", []),
     }
 
 
@@ -44,6 +45,11 @@ def handle_update_person(
     try:
         first_name = validate_name(payload.get("firstName"), "firstName", 100)
         last_name = validate_name(payload.get("lastName"), "lastName", 100)
+        communication_preferences = None
+        if "communicationPreferences" in payload:
+            communication_preferences = validate_communication_preferences(
+                payload["communicationPreferences"]
+            )
     except ValidationError as exc:
         return json_response(400, {"message": str(exc)})
 
@@ -60,6 +66,9 @@ def handle_update_person(
     if avatar_url:
         update_expression += ", avatarUrl = :avatarUrl"
         expression_values[":avatarUrl"] = avatar_url
+    if communication_preferences is not None:
+        update_expression += ", communicationPreferences = :communicationPreferences"
+        expression_values[":communicationPreferences"] = communication_preferences
 
     try:
         result = _table.update_item(

@@ -5,6 +5,8 @@ from strands import Agent
 from strands.models import BedrockModel
 from strands.session.s3_session_manager import S3SessionManager
 
+from prompts import FIXE_AGENT_PROMPT
+
 SESSION_BUCKET = os.environ["SESSION_BUCKET"]
 CLAUDE_MODEL_ID = os.environ["CLAUDE_MODEL_ID"]
 
@@ -34,7 +36,9 @@ def handler(event, _context):
         return json_response(400, {"message": "Request body must include a non-empty 'message'."})
 
     session_manager = S3SessionManager(session_id=person_id, bucket=SESSION_BUCKET)
-    agent = Agent(model=model, session_manager=session_manager)
+    agent = Agent(model=model, 
+    session_manager=session_manager,
+    system_prompt=FIXE_AGENT_PROMPT)
     result = agent(message)
 
     return json_response(200, {"reply": str(result)})

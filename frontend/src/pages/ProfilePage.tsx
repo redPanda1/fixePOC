@@ -3,8 +3,11 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   CircularProgress,
   Divider,
+  FormControlLabel,
+  FormGroup,
   Paper,
   Stack,
   TextField,
@@ -14,6 +17,13 @@ import AvatarUploader from '../components/profile/AvatarUploader';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { FETCH_PERSON_PROFILE, UPDATE_PERSON } from '../store/authSlice';
 import { FETCH_ORGANIZATION, UPDATE_ORGANIZATION } from '../store/organizationSlice';
+import type { CommunicationPreference } from '../types/person';
+
+const COMMUNICATION_PREFERENCE_OPTIONS: { value: CommunicationPreference; label: string }[] = [
+  { value: 'email', label: 'Email' },
+  { value: 'textMessage', label: 'Text message' },
+  { value: 'fixeApp', label: 'FIXE app' },
+];
 
 export default function ProfilePage() {
   const dispatch = useAppDispatch();
@@ -28,6 +38,9 @@ export default function ProfilePage() {
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [communicationPreferences, setCommunicationPreferences] = useState<
+    CommunicationPreference[]
+  >([]);
   const [prevPersonId, setPrevPersonId] = useState<string | null>(null);
   const [orgName, setOrgName] = useState('');
   const [prevOrgId, setPrevOrgId] = useState<string | null>(null);
@@ -45,6 +58,7 @@ export default function ProfilePage() {
     setPrevPersonId(person.personId);
     setFirstName(person.firstName);
     setLastName(person.lastName);
+    setCommunicationPreferences(person.communicationPreferences ?? []);
   }
   if (organization && organization.orgId !== prevOrgId) {
     setPrevOrgId(organization.orgId);
@@ -54,10 +68,16 @@ export default function ProfilePage() {
   const handleSavePerson = (event: FormEvent) => {
     event.preventDefault();
     setPersonSaved(false);
-    dispatch(UPDATE_PERSON({ firstName, lastName }))
+    dispatch(UPDATE_PERSON({ firstName, lastName, communicationPreferences }))
       .unwrap()
       .then(() => setPersonSaved(true))
       .catch(() => undefined);
+  };
+
+  const handleToggleCommunicationPreference = (value: CommunicationPreference, checked: boolean) => {
+    setCommunicationPreferences((current) =>
+      checked ? [...current, value] : current.filter((item) => item !== value),
+    );
   };
 
   const handleSaveOrganization = (event: FormEvent) => {
@@ -134,6 +154,27 @@ export default function ProfilePage() {
                     required
                     fullWidth
                   />
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                      Communication preferences
+                    </Typography>
+                    <FormGroup>
+                      {COMMUNICATION_PREFERENCE_OPTIONS.map((option) => (
+                        <FormControlLabel
+                          key={option.value}
+                          control={
+                            <Checkbox
+                              checked={communicationPreferences.includes(option.value)}
+                              onChange={(event) =>
+                                handleToggleCommunicationPreference(option.value, event.target.checked)
+                              }
+                            />
+                          }
+                          label={option.label}
+                        />
+                      ))}
+                    </FormGroup>
+                  </Box>
                   <Button
                     type="submit"
                     variant="contained"
