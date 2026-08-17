@@ -443,6 +443,49 @@ Resources:
             TableName: !Ref FixeReceiptsTable
         - S3ReadPolicy:
             BucketName: !Ref FixeReceiptsBucket
+      Events:
+        CreateThread:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /action-queue/threads
+            Method: post
+        ListThreads:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /action-queue/threads
+            Method: get
+        GetThread:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /action-queue/threads/{threadId}
+            Method: get
+        AddMessage:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /action-queue/threads/{threadId}/messages
+            Method: post
+        SelectOption:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /action-queue/threads/{threadId}/messages/{messageId}/select
+            Method: post
+        SetStatus:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /action-queue/threads/{threadId}/status
+            Method: post
+        RenderVerdict:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /action-queue/threads/{threadId}/verdict
+            Method: post
 
 Outputs:
   UserPoolId:
