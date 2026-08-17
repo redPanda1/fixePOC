@@ -59,7 +59,10 @@ export default function TopBar() {
                 </Typography>
               )}
             </Box>
-            <Avatar sx={{ bgcolor: '#38d29f', color: '#132030', width: 36, height: 36 }}>
+            <Avatar
+              src={person?.avatarUrl ?? undefined}
+              sx={{ bgcolor: '#38d29f', color: '#132030', width: 36, height: 36 }}
+            >
               {initials}
             </Avatar>
           </Box>

@@ -14,8 +14,8 @@ export function fetchPersonRecord(token?: string) {
   return apiRequest<Person>('/login', token ? { token } : undefined);
 }
 
-export function fetchPersonProfile() {
-  return apiRequest<Person>('/person', { method: 'GET' });
+export function fetchPersonProfile(token?: string) {
+  return apiRequest<Person>('/person', token ? { method: 'GET', token } : { method: 'GET' });
 }
 
 export interface UpdatePersonPayload {

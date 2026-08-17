@@ -75,7 +75,13 @@ async function finishAuthentication(
     return personResult;
   }
 
-  return { ok: true, data: { tokenMaterial, person: personResult.data } };
+  // /login returns the raw stored avatarUrl (an s3:// pseudo-URI, not browser-loadable).
+  // /person recomputes it as a short-lived presigned URL - prefer that when it succeeds,
+  // but don't fail the whole login over this secondary call.
+  const profileResult = await fetchPersonProfile(tokenMaterial.idToken);
+  const person = profileResult.ok ? profileResult.data : personResult.data;
+
+  return { ok: true, data: { tokenMaterial, person } };
 }
 
 export const LOGIN_WITH_PASSWORD = createAsyncThunk<
@@ -151,7 +157,10 @@ export const FETCH_CURRENT_PERSON = createAsyncThunk<Person, void, { rejectValue
     if (!personResult.ok) {
       return rejectWithValue(personResult.error);
     }
-    return personResult.data;
+
+    // See finishAuthentication() above for why /person is preferred when available.
+    const profileResult = await fetchPersonProfile();
+    return profileResult.ok ? profileResult.data : personResult.data;
   },
 );
 
