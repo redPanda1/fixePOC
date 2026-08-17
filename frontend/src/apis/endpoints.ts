@@ -1,5 +1,16 @@
 import axios from 'axios';
 
+import type {
+  AddMessageRequest,
+  CreateThreadRequest,
+  ListPickerReceiptsResponse,
+  ListThreadsResponse,
+  RenderVerdictRequest,
+  SelectOptionRequest,
+  SetThreadStatusRequest,
+  SimulateAgentRequest,
+  ThreadResponse,
+} from '../types/actionQueue';
 import type { Organization, OrganizationSummary } from '../types/organization';
 import type { Person } from '../types/person';
 import type {
@@ -106,4 +117,55 @@ export function getReceipt(id: string) {
 
 export function deleteReceipt(id: string) {
   return apiRequest<void>(`/receipts/${id}`, { method: 'DELETE' });
+}
+
+export function createThread(payload: CreateThreadRequest) {
+  return apiRequest<ThreadResponse>('/action-queue/threads', { method: 'POST', body: payload });
+}
+
+export function listThreads() {
+  return apiRequest<ListThreadsResponse>('/action-queue/threads', { method: 'GET' });
+}
+
+export function getThread(threadId: string) {
+  return apiRequest<ThreadResponse>(`/action-queue/threads/${threadId}`, { method: 'GET' });
+}
+
+export function addMessage(threadId: string, payload: AddMessageRequest) {
+  return apiRequest<ThreadResponse>(`/action-queue/threads/${threadId}/messages`, {
+    method: 'POST',
+    body: payload,
+  });
+}
+
+export function selectOption(threadId: string, messageId: string, payload: SelectOptionRequest) {
+  return apiRequest<ThreadResponse>(`/action-queue/threads/${threadId}/messages/${messageId}/select`, {
+    method: 'POST',
+    body: payload,
+  });
+}
+
+export function setThreadStatus(threadId: string, payload: SetThreadStatusRequest) {
+  return apiRequest<ThreadResponse>(`/action-queue/threads/${threadId}/status`, {
+    method: 'POST',
+    body: payload,
+  });
+}
+
+export function renderVerdict(threadId: string, payload: RenderVerdictRequest) {
+  return apiRequest<ThreadResponse>(`/action-queue/threads/${threadId}/verdict`, {
+    method: 'POST',
+    body: payload,
+  });
+}
+
+export function simulateAgent(payload: SimulateAgentRequest) {
+  return apiRequest<ThreadResponse>('/action-queue/simulate-agent', { method: 'POST', body: payload });
+}
+
+export function listOrgReceipts(orgId: string) {
+  return apiRequest<ListPickerReceiptsResponse>(
+    `/action-queue/receipts?orgId=${encodeURIComponent(orgId)}`,
+    { method: 'GET' },
+  );
 }

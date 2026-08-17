@@ -2,6 +2,7 @@ import { List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material'
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
+import ForumOutlinedIcon from '@mui/icons-material/ForumOutlined';
 import { NavLink } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/redux';
 
@@ -14,8 +15,12 @@ export default function SideMenu() {
         { label: 'Dashboard', to: '/', icon: <DashboardOutlinedIcon /> },
         { label: 'Chat', to: '/chat', icon: <ChatOutlinedIcon /> },
         { label: 'Receipts', to: '/receipts', icon: <ReceiptLongOutlinedIcon /> },
+        { label: 'Action Queue', to: '/action-queue', icon: <ForumOutlinedIcon /> },
       ]
-    : [{ label: 'Dashboard', to: '/dashboard', icon: <DashboardOutlinedIcon /> }];
+    : [
+        { label: 'Dashboard', to: '/dashboard', icon: <DashboardOutlinedIcon /> },
+        { label: 'Action Queue', to: '/action-queue', icon: <ForumOutlinedIcon /> },
+      ];
 
   return (
     <List sx={{ px: 1, py: 2 }}>

@@ -2,6 +2,8 @@ import { createBrowserRouter, type RouteObject } from 'react-router-dom';
 import AdminRoute from '../components/auth/AdminRoute';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import AppLayout from '../components/layout/AppLayout';
+import ActionQueuePage from '../pages/ActionQueuePage';
+import ActionQueueThreadPage from '../pages/ActionQueueThreadPage';
 import ChatPage from '../pages/ChatPage';
 import ConfirmPasswordPage from '../pages/ConfirmPasswordPage';
 import DashboardPage from '../pages/DashboardPage';
@@ -39,6 +41,8 @@ const protectedRoutes: RouteObject[] = [
           },
           { path: '/dashboard', element: <MemberDashboardPage /> },
           { path: '/profile', element: <ProfilePage /> },
+          { path: '/action-queue', element: <ActionQueuePage /> },
+          { path: '/action-queue/:threadId', element: <ActionQueueThreadPage /> },
         ],
       },
     ],

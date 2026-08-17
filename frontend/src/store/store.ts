@@ -3,6 +3,7 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { configureApiClient } from '../apis/apiClient';
 import { refreshCognitoTokens } from '../apis/cognitoAuth';
 import { readStoredTokenMaterial, storeTokenMaterial } from '../utils/sessionStorage';
+import { actionQueueReducer } from './actionQueueSlice';
 import { authReducer, LOGOUT, SET_TOKEN_MATERIAL } from './authSlice';
 import { chatReducer } from './chatSlice';
 import { organizationReducer } from './organizationSlice';
@@ -10,6 +11,7 @@ import { receiptsReducer } from './receiptsSlice';
 import { statusReducer, USER_MESSAGE } from './statusSlice';
 
 const appReducer = combineReducers({
+  actionQueue: actionQueueReducer,
   auth: authReducer,
   chat: chatReducer,
   organization: organizationReducer,
