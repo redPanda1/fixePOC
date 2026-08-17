@@ -3,11 +3,13 @@ import json
 from add_message import handle_add_message
 from create_thread import handle_create_thread
 from get_thread import handle_get_thread
+from list_org_receipts import handle_list_org_receipts
 from list_threads import handle_list_threads
 from render_verdict import handle_render_verdict
 from responses import json_response
 from select_option import handle_select_option
 from set_status import handle_set_status
+from simulate_agent import handle_simulate_agent
 
 
 def handler(event, _context):
@@ -27,6 +29,9 @@ def handler(event, _context):
         return handle_list_threads(person_id, org_id, groups)
     if route_key == "GET /action-queue/threads/{threadId}":
         return handle_get_thread(path_params["threadId"], person_id, org_id, groups)
+    if route_key == "GET /action-queue/receipts":
+        query_params = event.get("queryStringParameters") or {}
+        return handle_list_org_receipts(query_params.get("orgId"), groups)
 
     try:
         body = json.loads(event.get("body") or "{}")
@@ -45,6 +50,8 @@ def handler(event, _context):
         return handle_set_status(path_params["threadId"], person_id, groups, body)
     if route_key == "POST /action-queue/threads/{threadId}/verdict":
         return handle_render_verdict(path_params["threadId"], person_id, groups, body)
+    if route_key == "POST /action-queue/simulate-agent":
+        return handle_simulate_agent(person_id, groups, body)
 
     return json_response(404, {"message": "Not found"})
 

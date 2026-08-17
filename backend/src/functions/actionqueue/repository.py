@@ -6,9 +6,13 @@ import boto3
 from boto3.dynamodb.conditions import Key
 
 THREAD_TABLE_NAME = os.environ["THREAD_TABLE_NAME"]
+RECEIPTS_TABLE = os.environ["RECEIPTS_TABLE"]
+PERSON_TABLE_NAME = os.environ["PERSON_TABLE_NAME"]
 
 _dynamodb = boto3.resource("dynamodb")
 _table = _dynamodb.Table(THREAD_TABLE_NAME)
+_receipts_table = _dynamodb.Table(RECEIPTS_TABLE)
+_person_table = _dynamodb.Table(PERSON_TABLE_NAME)
 
 
 class ConcurrencyError(Exception):
@@ -45,6 +49,34 @@ def list_threads_by_org(org_id: str, *, exclude_agent_proposal: bool = False) ->
         query_kwargs["ExpressionAttributeValues"] = {":agentProposal": "agent_proposal"}
     result = _table.query(**query_kwargs)
     return [_from_dynamo(item) for item in result.get("Items", [])]
+
+
+def list_receipts_by_org(org_id: str) -> list[dict[str, Any]]:
+    result = _receipts_table.query(
+        IndexName="OrgIndex",
+        KeyConditionExpression=Key("orgId").eq(org_id),
+        ScanIndexForward=False,  # receiptId is a zero-padded timestamp, so this is newest-first.
+    )
+    return [_from_dynamo(item) for item in result.get("Items", [])]
+
+
+def count_agent_proposal_threads(org_id: str) -> int:
+    result = _table.query(
+        IndexName="OrgIndex",
+        KeyConditionExpression=Key("orgId").eq(org_id),
+        FilterExpression="entryType = :agentProposal",
+        ExpressionAttributeValues={":agentProposal": "agent_proposal"},
+        Select="COUNT",
+    )
+    return int(result.get("Count", 0))
+
+
+def find_agent_person_id() -> str | None:
+    # Table is tiny at POC scale, so a Scan for the one isAgent-flagged item is fine -
+    # there's no access pattern elsewhere that needs "find person by flag," so no GSI exists.
+    result = _person_table.scan(FilterExpression="isAgent = :true", ExpressionAttributeValues={":true": True})
+    items = result.get("Items", [])
+    return items[0]["personId"] if items else None
 
 
 def _conditional_update(

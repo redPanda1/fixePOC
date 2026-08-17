@@ -486,6 +486,18 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /action-queue/threads/{threadId}/verdict
             Method: post
+        SimulateAgent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /action-queue/simulate-agent
+            Method: post
+        ListOrgReceipts:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /action-queue/receipts
+            Method: get
 
 Outputs:
   UserPoolId:
