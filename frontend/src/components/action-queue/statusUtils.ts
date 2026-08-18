@@ -12,6 +12,16 @@ export const STATUS_COLOR: Record<
   archived: 'default',
 };
 
+// Customer-facing color differs from STATUS_COLOR for waiting_on_internal: the
+// customer isn't the one who needs to act, so it shouldn't read as a warning to them.
+export const CUSTOMER_STATUS_COLOR: Record<
+  ThreadStatus,
+  'default' | 'info' | 'primary' | 'warning' | 'success'
+> = {
+  ...STATUS_COLOR,
+  waiting_on_internal: 'info',
+};
+
 export const AM_STATUS_LABEL: Record<ThreadStatus, string> = {
   created: 'New',
   read: 'Read',
@@ -21,11 +31,13 @@ export const AM_STATUS_LABEL: Record<ThreadStatus, string> = {
   archived: 'Archived',
 };
 
-export const CUSTOMER_STATUS_LABEL: Record<ThreadStatus, 'New' | 'Open' | 'Done'> = {
+// waiting_on_customer means the customer needs to act ("Open"); waiting_on_internal
+// means FIXE is handling it, so it gets its own label/color rather than also reading "Open".
+export const CUSTOMER_STATUS_LABEL: Record<ThreadStatus, 'New' | 'Open' | 'In Review' | 'Done'> = {
   created: 'New',
   read: 'New',
   waiting_on_customer: 'Open',
-  waiting_on_internal: 'Open',
+  waiting_on_internal: 'In Review',
   complete: 'Done',
   archived: 'Done',
 };
@@ -59,4 +71,10 @@ const TERMINAL_STATUSES: ThreadStatus[] = ['complete', 'archived'];
 
 export function isCustomerThreadOpen(status: ThreadStatus): boolean {
   return !TERMINAL_STATUSES.includes(status);
+}
+
+// Only waiting_on_customer requires the customer to do something; waiting_on_internal
+// stays on the uncompleted list but shouldn't trigger the "needs your attention" badge.
+export function isCustomerActionNeeded(status: ThreadStatus): boolean {
+  return status === 'waiting_on_customer';
 }

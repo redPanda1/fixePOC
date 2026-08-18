@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { LOGOUT } from '../../store/authSlice';
 import { fetchThreads } from '../../store/actionQueueSlice';
+import { isCustomerActionNeeded } from '../action-queue/statusUtils';
 import logo from '../../assets/fixe-logo.png';
 
 export const DRAWER_WIDTH = 240;
@@ -46,7 +47,7 @@ export default function TopBar() {
     if (isAdmin) {
       return threads.filter((thread) => thread.status === 'waiting_on_internal').length;
     }
-    return threads.filter((thread) => thread.status !== 'complete' && thread.status !== 'archived').length;
+    return threads.filter((thread) => isCustomerActionNeeded(thread.status)).length;
   }, [threads, isAdmin]);
 
   const handleAlertClick = () => {

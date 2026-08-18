@@ -241,6 +241,62 @@ Resources:
             Path: /organizations
             Method: get
 
+  UsersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: python3.13
+      Timeout: 15
+      MemorySize: 256
+      CodeUri: src/functions/users/
+      Handler: index.handler
+      Environment:
+        Variables:
+          PERSON_TABLE_NAME: !Ref FixePersonTable
+          ORGANIZATION_TABLE_NAME: !Ref FixeOrganizationTable
+          USER_POOL_ID: !Ref FixeUserPool
+          USER_POOL_CLIENT_ID: !Ref FixeUserPoolClient
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref FixePersonTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref FixeOrganizationTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - cognito-idp:ListUsers
+                - cognito-idp:ListUsersInGroup
+                - cognito-idp:AdminCreateUser
+                - cognito-idp:AdminAddUserToGroup
+                - cognito-idp:AdminEnableUser
+                - cognito-idp:AdminDisableUser
+                - cognito-idp:ForgotPassword
+              Resource: !GetAtt FixeUserPool.Arn
+      Events:
+        ListUsers:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /users
+            Method: get
+        CreateUser:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /users
+            Method: post
+        SetUserStatus:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /users/{username}/status
+            Method: put
+        ResetUserPassword:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /users/{username}/reset-password
+            Method: post
+
   FixeChatSessionsBucket:
     Type: AWS::S3::Bucket
     Properties:

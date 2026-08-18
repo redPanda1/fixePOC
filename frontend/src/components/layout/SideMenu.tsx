@@ -3,6 +3,7 @@ import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import ForumOutlinedIcon from '@mui/icons-material/ForumOutlined';
+import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import { NavLink } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/redux';
 
@@ -16,6 +17,7 @@ export default function SideMenu() {
         { label: 'Chat', to: '/chat', icon: <ChatOutlinedIcon /> },
         { label: 'Receipts', to: '/receipts', icon: <ReceiptLongOutlinedIcon /> },
         { label: 'Action Queue', to: '/action-queue', icon: <ForumOutlinedIcon /> },
+        { label: 'Users', to: '/users', icon: <PeopleAltOutlinedIcon /> },
       ]
     : [
         { label: 'Dashboard', to: '/dashboard', icon: <DashboardOutlinedIcon /> },

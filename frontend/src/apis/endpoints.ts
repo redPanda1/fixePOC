@@ -19,6 +19,7 @@ import type {
   GetReceiptResponse,
   ListReceiptsResponse,
 } from '../types/receipts';
+import type { CreateUserPayload, UserListItem } from '../types/user';
 import { apiRequest } from './apiClient';
 
 export function fetchPersonRecord(token?: string) {
@@ -169,5 +170,31 @@ export function listOrgReceipts(orgId: string) {
   return apiRequest<ListPickerReceiptsResponse>(
     `/action-queue/receipts?orgId=${encodeURIComponent(orgId)}`,
     { method: 'GET' },
+  );
+}
+
+export interface ListUsersResponse {
+  users: UserListItem[];
+}
+
+export function listUsers() {
+  return apiRequest<ListUsersResponse>('/users', { method: 'GET' });
+}
+
+export function createUser(payload: CreateUserPayload) {
+  return apiRequest<UserListItem>('/users', { method: 'POST', body: payload });
+}
+
+export function setUserStatus(username: string, enabled: boolean) {
+  return apiRequest<{ username: string; enabled: boolean }>(
+    `/users/${encodeURIComponent(username)}/status`,
+    { method: 'PUT', body: { enabled } },
+  );
+}
+
+export function resetUserPassword(username: string) {
+  return apiRequest<{ message: string }>(
+    `/users/${encodeURIComponent(username)}/reset-password`,
+    { method: 'POST' },
   );
 }

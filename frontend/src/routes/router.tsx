@@ -14,6 +14,7 @@ import NewPasswordPage from '../pages/NewPasswordPage';
 import ProfilePage from '../pages/ProfilePage';
 import ReceiptDetailPage from '../pages/ReceiptDetailPage';
 import ReceiptsPage from '../pages/ReceiptsPage';
+import UsersPage from '../pages/UsersPage';
 
 // Unauthenticated routes.
 const publicRoutes: RouteObject[] = [
@@ -37,6 +38,7 @@ const protectedRoutes: RouteObject[] = [
               { path: '/chat', element: <ChatPage /> },
               { path: '/receipts', element: <ReceiptsPage /> },
               { path: '/receipt/:id', element: <ReceiptDetailPage /> },
+              { path: '/users', element: <UsersPage /> },
             ],
           },
           { path: '/dashboard', element: <MemberDashboardPage /> },

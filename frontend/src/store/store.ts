@@ -9,6 +9,7 @@ import { chatReducer } from './chatSlice';
 import { organizationReducer } from './organizationSlice';
 import { receiptsReducer } from './receiptsSlice';
 import { statusReducer, USER_MESSAGE } from './statusSlice';
+import { usersReducer } from './usersSlice';
 
 const appReducer = combineReducers({
   actionQueue: actionQueueReducer,
@@ -17,6 +18,7 @@ const appReducer = combineReducers({
   organization: organizationReducer,
   receipts: receiptsReducer,
   status: statusReducer,
+  users: usersReducer,
 });
 
 export type RootState = ReturnType<typeof appReducer>;
