@@ -1,6 +1,7 @@
 from typing import Any
 
 from ids import generate_sortable_id, now_iso
+from notify import notify_customer_input_needed
 from repository import create_thread as repo_create_thread
 from responses import json_response
 from serialize import serialize_thread_detail
@@ -68,5 +69,9 @@ def handle_create_thread(person_id: str, groups: list[str], body: dict[str, Any]
         repo_create_thread(item)
     except Exception:  # noqa: BLE001 - keep storage internals out of API responses
         return json_response(500, {"message": "Thread could not be created"})
+
+    # New threads always start waiting_on_customer (see comment above), so the customer
+    # always needs to be notified here.
+    notify_customer_input_needed(thread_id=thread_id, org_id=org_id, subject=subject, preview=content[:140])
 
     return json_response(201, {"thread": serialize_thread_detail(item)})

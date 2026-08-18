@@ -11,4 +11,5 @@ export interface Person {
   userType: UserType;
   avatarUrl: string | null;
   communicationPreferences: CommunicationPreference[];
+  phoneNumber: string | null;
 }

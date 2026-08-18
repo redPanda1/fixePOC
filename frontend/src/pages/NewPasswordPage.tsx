@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, type Location } from 'react-router-dom';
 import { Alert, Box, Button, Paper, Stack, Typography } from '@mui/material';
 import PasswordField from '../components/auth/PasswordField';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
@@ -12,6 +12,7 @@ interface NewPasswordLocationState {
   username: string;
   requiredAttributes: string[];
   userAttributes: Record<string, string>;
+  from?: Location;
 }
 
 export default function NewPasswordPage() {
@@ -23,9 +24,10 @@ export default function NewPasswordPage() {
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const state = location.state as NewPasswordLocationState | null;
+  const redirectTo = state?.from ? `${state.from.pathname}${state.from.search}` : '/';
 
   if (token) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={redirectTo} replace />;
   }
 
   if (!state?.session || !state?.username) {

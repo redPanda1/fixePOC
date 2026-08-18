@@ -21,6 +21,31 @@ Parameters:
       Bedrock cross-region inference profile ID for the first-pass (cheap) receipt
       analysis model. Verify this is enabled under Bedrock -> Model access in the
       target region/account before deploying.
+  AppBaseUrl:
+    Type: String
+    Default: http://localhost:5173
+    Description: >-
+      Base URL used to build Action Queue deep links in notifications, e.g.
+      "<AppBaseUrl>/action-queue/{threadId}". Set to the deployed web app's origin
+      for non-local stages.
+  NotificationEmailFrom:
+    Type: String
+    Default: notifications@fixelite.com
+    Description: >-
+      SES-verified sender identity for Action Queue email notifications. Must be
+      verified in the SES console (or the domain verified) before emails will send -
+      SES starts in sandbox mode, which also requires every recipient to be verified
+      until production access is granted.
+  FcmServiceAccountSecretArn:
+    Type: String
+    Description: >-
+      ARN of a Secrets Manager secret holding the Firebase service-account JSON
+      (project fixelite-cd74d) used to authenticate FCM HTTP v1 push send calls.
+      Create out-of-band before first deploy - Firebase console -> Project Settings
+      -> Service Accounts -> Generate new private key, then
+      `aws secretsmanager create-secret --name <name> --secret-string file://key.json`
+      - the key material must not be committed to source, so this template only
+      references it by ARN.
 
 Globals:
   Function:
@@ -185,6 +210,12 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /person
             Method: put
+        RegisterDeviceToken:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /profile/device-token
+            Method: post
         GetOrganization:
           Type: HttpApi
           Properties:
@@ -432,6 +463,7 @@ Resources:
           ORGANIZATION_TABLE_NAME: !Ref FixeOrganizationTable
           RECEIPTS_TABLE: !Ref FixeReceiptsTable
           RECEIPTS_BUCKET: !Ref FixeReceiptsBucket
+          NOTIFICATION_FUNCTION_NAME: !Ref NotificationFunction
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref FixeActionQueueThreadTable
@@ -443,6 +475,12 @@ Resources:
             TableName: !Ref FixeReceiptsTable
         - S3ReadPolicy:
             BucketName: !Ref FixeReceiptsBucket
+        - Statement:
+            # Fire-and-forget (InvocationType="Event") trigger into NotificationFunction
+            # whenever a thread needs customer input - see notify.py.
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !GetAtt NotificationFunction.Arn
       Events:
         CreateThread:
           Type: HttpApi
@@ -498,6 +536,38 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /action-queue/receipts
             Method: get
+
+  NotificationFunction:
+    # Sends the "thread needs customer input" email/SMS/push notifications. No HttpApi
+    # Events - it's invoked only via async lambda:InvokeFunction (see actionqueue/notify.py)
+    # or directly (sam local invoke / aws lambda invoke) for testing.
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: python3.13
+      Timeout: 15
+      MemorySize: 256
+      CodeUri: src/functions/notifications/
+      Handler: index.handler
+      Environment:
+        Variables:
+          PERSON_TABLE_NAME: !Ref FixePersonTable
+          APP_BASE_URL: !Ref AppBaseUrl
+          NOTIFICATION_EMAIL_FROM: !Ref NotificationEmailFrom
+          FCM_SERVICE_ACCOUNT_SECRET_ARN: !Ref FcmServiceAccountSecretArn
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref FixePersonTable
+        - Statement:
+            - Effect: Allow
+              Action: ses:SendEmail
+              Resource: "*"
+            - Effect: Allow
+              Action: sns:Publish
+              # Direct-to-phone-number publish has no fixed ARN to scope this to.
+              Resource: "*"
+            - Effect: Allow
+              Action: secretsmanager:GetSecretValue
+              Resource: !Ref FcmServiceAccountSecretArn
 
 Outputs:
   UserPoolId:

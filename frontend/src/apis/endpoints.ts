@@ -34,6 +34,7 @@ export interface UpdatePersonPayload {
   lastName: string;
   avatarUrl?: string;
   communicationPreferences?: CommunicationPreference[];
+  phoneNumber?: string | null;
 }
 
 export function updatePerson(payload: UpdatePersonPayload) {

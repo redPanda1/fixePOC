@@ -2,7 +2,7 @@ import json
 
 from avatar_storage import AvatarStorageError, create_upload_url
 from organization import handle_get_organization, handle_list_organizations, handle_update_organization
-from person import handle_get_person, handle_update_person
+from person import handle_get_person, handle_update_device_token, handle_update_person
 from responses import json_response
 
 
@@ -35,6 +35,8 @@ def handler(event, _context):
 
     if route_key == "PUT /person":
         return handle_update_person(person_id, org_id, groups, body)
+    if route_key == "POST /profile/device-token":
+        return handle_update_device_token(person_id, org_id, groups, body)
     if route_key == "PUT /organization":
         return handle_update_organization(org_id, body)
     if route_key == "POST /avatars/upload-url":

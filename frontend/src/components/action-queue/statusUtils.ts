@@ -34,9 +34,18 @@ export const CUSTOMER_STATUS_LABEL: Record<ThreadStatus, 'New' | 'Open' | 'Done'
 // already `waiting_on_customer` (the AM's first message is what creates them) and
 // never pass through those states. `created`/`read` remain valid ThreadStatus values
 // because agent_proposal threads still use them (see backend status.py).
-export type StatusFilterKey = 'waiting_on_customer' | 'waiting_on_internal' | 'complete';
+export type StatusFilterKey =
+  | 'in_progress'
+  | 'waiting_on_customer'
+  | 'waiting_on_internal'
+  | 'complete';
 
 export const FILTER_BUCKETS: { key: StatusFilterKey; label: string; statuses: ThreadStatus[] }[] = [
+  {
+    key: 'in_progress',
+    label: 'In Progress',
+    statuses: ['created', 'read', 'waiting_on_customer', 'waiting_on_internal'],
+  },
   { key: 'waiting_on_customer', label: 'Waiting on Customer', statuses: ['waiting_on_customer'] },
   { key: 'waiting_on_internal', label: 'Waiting on Internal', statuses: ['waiting_on_internal'] },
   { key: 'complete', label: 'Complete', statuses: ['complete', 'archived'] },

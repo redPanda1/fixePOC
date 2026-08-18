@@ -1,6 +1,7 @@
 from typing import Any
 
 from ids import generate_sortable_id, now_iso
+from notify import notify_customer_input_needed
 from repository import ConcurrencyError, append_message, get_thread
 from responses import json_response
 from serialize import serialize_thread_detail
@@ -70,5 +71,13 @@ def handle_add_message(
         )
     except ConcurrencyError as exc:
         return json_response(409, {"message": str(exc)})
+
+    if actor_role == "am":
+        # Notify on every AM-authored message, not just ones that flip the status - even
+        # if the thread was already waiting_on_customer, the customer hasn't seen this
+        # new content yet (see status_after_message()'s no-op-transition comment).
+        notify_customer_input_needed(
+            thread_id=thread_id, org_id=item["orgId"], subject=item["subject"], preview=content[:140]
+        )
 
     return json_response(200, {"thread": serialize_thread_detail(updated)})

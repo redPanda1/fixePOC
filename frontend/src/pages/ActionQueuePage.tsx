@@ -28,7 +28,8 @@ export default function ActionQueuePage() {
   const initialFilterParam = searchParams.get('filter');
   const [filter, setFilter] = useState<StatusFilterKey | null>(() => {
     const bucket = FILTER_BUCKETS.find((b) => b.key === initialFilterParam);
-    return bucket?.key ?? null;
+    if (bucket) return bucket.key;
+    return initialFilterParam === 'all' ? null : 'in_progress';
   });
   const [showAllForCustomer, setShowAllForCustomer] = useState(() => initialFilterParam === 'all');
   const [newQuestionOpen, setNewQuestionOpen] = useState(false);

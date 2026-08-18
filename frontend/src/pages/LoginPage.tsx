@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link as RouterLink, Navigate, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, Navigate, useLocation, useNavigate, type Location } from 'react-router-dom';
 import { Alert, Box, Button, Link, Paper, Stack, TextField, Typography } from '@mui/material';
 import PasswordField from '../components/auth/PasswordField';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
@@ -9,12 +9,18 @@ import logo from '../assets/fixe-logo.png';
 export default function LoginPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { status, error, token } = useAppSelector((state) => state.auth);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
+  // Set by ProtectedRoute when it bounced an unauthenticated visit here - e.g. a
+  // notification deep link into an Action Queue thread. Falls back to the dashboard.
+  const from = (location.state as { from?: Location } | null)?.from;
+  const redirectTo = from ? `${from.pathname}${from.search}` : '/';
+
   if (token) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={redirectTo} replace />;
   }
 
   const handleSubmit = async (event: FormEvent) => {
@@ -28,6 +34,7 @@ export default function LoginPage() {
             username: outcome.username,
             requiredAttributes: outcome.requiredAttributes,
             userAttributes: outcome.userAttributes,
+            from,
           },
         });
       }

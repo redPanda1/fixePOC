@@ -1,3 +1,8 @@
+import re
+
+_PHONE_RE = re.compile(r"^\+[1-9]\d{7,14}$")
+
+
 class ValidationError(Exception):
     pass
 
@@ -25,3 +30,17 @@ def validate_communication_preferences(value) -> list[str]:
         if item not in seen:
             seen.append(item)
     return seen
+
+
+def validate_phone_number(value) -> str | None:
+    if value is None or value == "":
+        return None
+    if not isinstance(value, str) or not _PHONE_RE.match(value):
+        raise ValidationError("'phoneNumber' must be E.164 format, e.g. +15551234567")
+    return value
+
+
+def validate_device_token(value) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValidationError("'fcmDeviceToken' must be a non-empty string")
+    return value.strip()

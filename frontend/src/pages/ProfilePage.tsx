@@ -38,6 +38,7 @@ export default function ProfilePage() {
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [communicationPreferences, setCommunicationPreferences] = useState<
     CommunicationPreference[]
   >([]);
@@ -58,6 +59,7 @@ export default function ProfilePage() {
     setPrevPersonId(person.personId);
     setFirstName(person.firstName);
     setLastName(person.lastName);
+    setPhoneNumber(person.phoneNumber ?? '');
     setCommunicationPreferences(person.communicationPreferences ?? []);
   }
   if (organization && organization.orgId !== prevOrgId) {
@@ -68,7 +70,9 @@ export default function ProfilePage() {
   const handleSavePerson = (event: FormEvent) => {
     event.preventDefault();
     setPersonSaved(false);
-    dispatch(UPDATE_PERSON({ firstName, lastName, communicationPreferences }))
+    dispatch(
+      UPDATE_PERSON({ firstName, lastName, phoneNumber: phoneNumber.trim() || null, communicationPreferences }),
+    )
       .unwrap()
       .then(() => setPersonSaved(true))
       .catch(() => undefined);
@@ -152,6 +156,18 @@ export default function ProfilePage() {
                     value={lastName}
                     onChange={(event) => setLastName(event.target.value)}
                     required
+                    fullWidth
+                  />
+                  <TextField
+                    label="Phone number"
+                    value={phoneNumber}
+                    onChange={(event) => setPhoneNumber(event.target.value)}
+                    placeholder="+15551234567"
+                    helperText={
+                      communicationPreferences.includes('textMessage') && !phoneNumber.trim()
+                        ? 'Add a phone number to receive text message notifications.'
+                        : 'Include country code, e.g. +15551234567.'
+                    }
                     fullWidth
                   />
                   <Box>
