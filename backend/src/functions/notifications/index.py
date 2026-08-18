@@ -30,6 +30,10 @@ def _notify_one(person: dict[str, Any], event: dict[str, Any]) -> None:
     url = build_thread_url(event["threadId"])
     person_id = person.get("personId")
 
+    if not preferences:
+        logger.info("personId=%s has no communicationPreferences configured - nothing to send", person_id)
+        return
+
     if "email" in preferences:
         if person.get("email"):
             _try_channel("email", person, event, send_email, person, event, url)
