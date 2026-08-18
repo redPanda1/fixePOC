@@ -38,8 +38,14 @@ def handle_list_organizations() -> dict[str, Any]:
     # access pattern elsewhere in the app that needs "every org," so no GSI exists.
     result = _table.scan()
     orgs = [
-        {"orgId": item["orgId"], "name": item.get("name") or "", "defaultAmId": item.get("defaultAmId")}
+        {
+            "orgId": item["orgId"],
+            "name": item.get("name") or "",
+            "avatarUrl": create_download_url(item["orgId"], item.get("avatarUrl")),
+            "defaultAmId": item.get("defaultAmId"),
+        }
         for item in result.get("Items", [])
+        if item.get("isInternal") is not True
     ]
     orgs.sort(key=lambda org: org["name"])
     return json_response(200, {"organizations": orgs})

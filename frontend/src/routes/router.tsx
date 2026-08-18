@@ -6,6 +6,7 @@ import ActionQueuePage from '../pages/ActionQueuePage';
 import ActionQueueThreadPage from '../pages/ActionQueueThreadPage';
 import ChatPage from '../pages/ChatPage';
 import ConfirmPasswordPage from '../pages/ConfirmPasswordPage';
+import CustomersPage from '../pages/CustomersPage';
 import DashboardPage from '../pages/DashboardPage';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import LoginPage from '../pages/LoginPage';
@@ -39,6 +40,7 @@ const protectedRoutes: RouteObject[] = [
               { path: '/receipts', element: <ReceiptsPage /> },
               { path: '/receipt/:id', element: <ReceiptDetailPage /> },
               { path: '/users', element: <UsersPage /> },
+              { path: '/customers', element: <CustomersPage /> },
             ],
           },
           { path: '/dashboard', element: <MemberDashboardPage /> },

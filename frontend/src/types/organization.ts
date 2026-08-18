@@ -8,5 +8,6 @@ export interface Organization {
 export interface OrganizationSummary {
   orgId: string;
   name: string;
+  avatarUrl: string | null;
   defaultAmId: string | null;
 }

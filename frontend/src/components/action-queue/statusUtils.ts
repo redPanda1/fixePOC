@@ -1,12 +1,16 @@
 import type { ThreadStatus } from '../../types/actionQueue';
 
+// AM-facing color: waiting_on_customer isn't something the admin needs to act
+// on, so it reads as info (blue) rather than a warning. waiting_on_internal is
+// what the admin needs to act on - it stays warning (orange), matching the
+// alert badge in TopBar which counts waiting_on_internal threads for admins.
 export const STATUS_COLOR: Record<
   ThreadStatus,
   'default' | 'info' | 'primary' | 'warning' | 'success'
 > = {
   created: 'default',
   read: 'info',
-  waiting_on_customer: 'warning',
+  waiting_on_customer: 'info',
   waiting_on_internal: 'warning',
   complete: 'success',
   archived: 'default',
