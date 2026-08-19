@@ -6,6 +6,7 @@ export interface UserListItem {
   orgName: string | null;
   firstName: string | null;
   lastName: string | null;
+  avatarUrl: string | null;
   isAdmin: boolean;
   enabled: boolean;
   cognitoStatus: string | null;

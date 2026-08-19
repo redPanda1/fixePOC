@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Avatar,
   Button,
   Chip,
   Dialog,
@@ -24,6 +25,18 @@ import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { sendPasswordReset, updateUserStatus } from '../../store/usersSlice';
 import { USER_MESSAGE } from '../../store/statusSlice';
 import type { UserListItem } from '../../types/user';
+
+function initialsFor(item: UserListItem): string {
+  const name = `${item.firstName ?? ''} ${item.lastName ?? ''}`.trim();
+  if (name) {
+    return name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('');
+  }
+  return item.email[0]?.toUpperCase() || '?';
+}
 
 export default function UserTable() {
   const dispatch = useAppDispatch();
@@ -60,6 +73,7 @@ export default function UserTable() {
         <Table size="small">
           <TableHead>
             <TableRow>
+              <TableCell />
               <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Organization</TableCell>
@@ -73,6 +87,11 @@ export default function UserTable() {
               const isSelf = currentEmail != null && item.email.toLowerCase() === currentEmail.toLowerCase();
               return (
                 <TableRow key={item.username} hover>
+                  <TableCell sx={{ width: 48 }}>
+                    <Avatar src={item.avatarUrl ?? undefined} sx={{ width: 32, height: 32 }}>
+                      {initialsFor(item)}
+                    </Avatar>
+                  </TableCell>
                   <TableCell>
                     {item.hasPersonRecord ? (
                       `${item.firstName ?? ''} ${item.lastName ?? ''}`.trim() || '—'

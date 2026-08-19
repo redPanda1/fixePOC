@@ -5,6 +5,7 @@ from typing import Any
 
 import boto3
 
+from avatar_storage import create_download_url
 from cognito_users import (
     CognitoUsersError,
     create_cognito_user,
@@ -81,6 +82,7 @@ def _serialize_user(
         "orgName": org_names.get(org_id or ""),
         "firstName": person.get("firstName") if person else None,
         "lastName": person.get("lastName") if person else None,
+        "avatarUrl": create_download_url(org_id, person.get("avatarUrl")) if person else None,
         "isAdmin": username in admin_usernames,
         "enabled": user.get("Enabled", False),
         "cognitoStatus": user.get("UserStatus"),

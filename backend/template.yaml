@@ -255,11 +255,14 @@ Resources:
           ORGANIZATION_TABLE_NAME: !Ref FixeOrganizationTable
           USER_POOL_ID: !Ref FixeUserPool
           USER_POOL_CLIENT_ID: !Ref FixeUserPoolClient
+          AVATARS_BUCKET: !Ref FixeReceiptsBucket
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref FixePersonTable
         - DynamoDBCrudPolicy:
             TableName: !Ref FixeOrganizationTable
+        - S3ReadPolicy:
+            BucketName: !Ref FixeReceiptsBucket
         - Statement:
             - Effect: Allow
               Action:
