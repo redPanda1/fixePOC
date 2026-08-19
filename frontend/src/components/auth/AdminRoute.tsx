@@ -1,6 +1,7 @@
 import { Box, CircularProgress } from '@mui/material';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/redux';
+import ChatWidget from '../chat/ChatWidget';
 
 export default function AdminRoute() {
   const token = useAppSelector((state) => state.auth.token);
@@ -19,5 +20,10 @@ export default function AdminRoute() {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <ChatWidget />
+      <Outlet />
+    </>
+  );
 }

@@ -20,4 +20,7 @@ def send_push(person: dict[str, Any], event: dict[str, Any], url: str) -> None:
         },
         timeout=5,
     )
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        raise requests.exceptions.HTTPError(f"{err}: {response.text}", response=response) from err
