@@ -534,6 +534,11 @@ Resources:
             TableName: !Ref FixeReceiptsTable
         - S3ReadPolicy:
             BucketName: !Ref FixeReceiptsBucket
+        - S3WritePolicy:
+            # Needed to sign chat-image upload URLs - see create_chat_image_upload_url.py.
+            # S3 validates a presigned PUT against the signing principal's real IAM
+            # permissions at request time, not at generation time.
+            BucketName: !Ref FixeReceiptsBucket
         - Statement:
             # Fire-and-forget (InvocationType="Event") trigger into NotificationFunction
             # whenever a thread needs customer input - see notify.py.
@@ -595,6 +600,12 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /action-queue/receipts
             Method: get
+        CreateChatImageUploadUrl:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /action-queue/chat-images/upload-url
+            Method: post
 
   NotificationFunction:
     # Sends the "thread needs customer input" email/SMS/push notifications. No HttpApi

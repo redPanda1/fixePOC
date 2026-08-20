@@ -37,7 +37,15 @@ def resolve_person_names(person_ids: set[str]) -> dict[str, str]:
 
 
 def _resolve_reference(ref: dict[str, Any]) -> dict[str, Any]:
-    if ref.get("type") != "receipt":
+    ref_type = ref.get("type")
+    if ref_type == "screenshot":
+        screenshot_key = ref.get("screenshotKey")
+        return {
+            "type": "screenshot",
+            "url": presigned_get_url(screenshot_key) if screenshot_key else None,
+            "label": ref.get("label"),
+        }
+    if ref_type != "receipt":
         return {"type": "link", "url": ref.get("url"), "label": ref.get("label")}
 
     result = _receipts_table.get_item(Key={"personId": ref.get("personId"), "receiptId": ref.get("receiptId")})

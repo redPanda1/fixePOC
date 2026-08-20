@@ -16,13 +16,15 @@ import {
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import ReferencePickerDialog from './ReferencePickerDialog';
+import ScreenshotReferenceList from './ScreenshotReferenceList';
 import type { NewQuestionFormState } from './useNewQuestionForm';
 
 interface NewQuestionFormProps {
   form: NewQuestionFormState;
+  referencesMode?: 'picker' | 'screenshot';
 }
 
-export default function NewQuestionForm({ form }: NewQuestionFormProps) {
+export default function NewQuestionForm({ form, referencesMode = 'picker' }: NewQuestionFormProps) {
   return (
     <>
       <Stack spacing={2} sx={{ pt: 0.5 }}>
@@ -63,28 +65,38 @@ export default function NewQuestionForm({ form }: NewQuestionFormProps) {
           size="small"
         />
 
-        <Box>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            References
-          </Typography>
-          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 1 }}>
-            {form.references.map((ref, index) => (
-              <Chip
-                key={index}
-                label={ref.label ?? (ref.type === 'receipt' ? 'Receipt' : ref.url)}
-                onDelete={() => form.setReferences((prev) => prev.filter((_, i) => i !== index))}
-              />
-            ))}
-          </Stack>
-          <Button
-            size="small"
-            startIcon={<AddRoundedIcon />}
-            onClick={() => form.setPickerOpen(true)}
-            disabled={!form.orgId}
-          >
-            Add reference
-          </Button>
-        </Box>
+        {referencesMode === 'screenshot' ? (
+          <ScreenshotReferenceList
+            key={form.resetKey}
+            orgId={form.orgId || null}
+            references={form.references}
+            onAdd={(reference) => form.setReferences((prev) => [...prev, reference])}
+            onRemove={(index) => form.setReferences((prev) => prev.filter((_, i) => i !== index))}
+          />
+        ) : (
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              References
+            </Typography>
+            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 1 }}>
+              {form.references.map((ref, index) => (
+                <Chip
+                  key={index}
+                  label={ref.label ?? (ref.type === 'receipt' ? 'Receipt' : ref.url)}
+                  onDelete={() => form.setReferences((prev) => prev.filter((_, i) => i !== index))}
+                />
+              ))}
+            </Stack>
+            <Button
+              size="small"
+              startIcon={<AddRoundedIcon />}
+              onClick={() => form.setPickerOpen(true)}
+              disabled={!form.orgId}
+            >
+              Add reference
+            </Button>
+          </Box>
+        )}
 
         <Box>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
@@ -121,12 +133,14 @@ export default function NewQuestionForm({ form }: NewQuestionFormProps) {
         {form.submitError && <Alert severity="error">{form.submitError}</Alert>}
       </Stack>
 
-      <ReferencePickerDialog
-        open={form.pickerOpen}
-        orgId={form.orgId || null}
-        onClose={() => form.setPickerOpen(false)}
-        onSelect={(reference) => form.setReferences((prev) => [...prev, reference])}
-      />
+      {referencesMode === 'picker' && (
+        <ReferencePickerDialog
+          open={form.pickerOpen}
+          orgId={form.orgId || null}
+          onClose={() => form.setPickerOpen(false)}
+          onSelect={(reference) => form.setReferences((prev) => [...prev, reference])}
+        />
+      )}
     </>
   );
 }

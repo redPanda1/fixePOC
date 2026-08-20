@@ -23,7 +23,7 @@ export default function ChatConversation({
     <>
       <Stack spacing={2} sx={{ flexGrow: 1, overflowY: 'auto', py: 2, ...containerSx }}>
         {messages.length === 0 && (
-          <Typography color="text.secondary">Send a message to get started.</Typography>
+          <Typography color="text.secondary">Ask the FIXE Agent anything...</Typography>
         )}
         {messages.map((message) => (
           <Box

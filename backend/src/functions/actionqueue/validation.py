@@ -1,7 +1,7 @@
 from typing import Any
 
 ENTRY_TYPES = {"question", "action", "agent_proposal"}
-REFERENCE_TYPES = {"receipt", "link"}
+REFERENCE_TYPES = {"receipt", "link", "screenshot"}
 
 
 class ValidationError(Exception):
@@ -25,7 +25,7 @@ def validate_entry_type(value: Any) -> str:
     return value
 
 
-def validate_references(value: Any) -> list[dict[str, Any]]:
+def validate_references(value: Any, org_id: str) -> list[dict[str, Any]]:
     if value is None:
         return []
     if not isinstance(value, list):
@@ -36,7 +36,7 @@ def validate_references(value: Any) -> list[dict[str, Any]]:
             raise ValidationError("Each reference must be an object")
         ref_type = raw.get("type")
         if ref_type not in REFERENCE_TYPES:
-            raise ValidationError("Each reference's 'type' must be 'receipt' or 'link'")
+            raise ValidationError("Each reference's 'type' must be 'receipt', 'link', or 'screenshot'")
         label = raw.get("label")
         if label is not None and not isinstance(label, str):
             raise ValidationError("A reference's 'label' must be a string")
@@ -48,6 +48,18 @@ def validate_references(value: Any) -> list[dict[str, Any]]:
             if not isinstance(person_id, str) or not person_id.strip():
                 raise ValidationError("A receipt reference must include a non-empty 'personId'")
             references.append({"type": "receipt", "receiptId": receipt_id, "personId": person_id, "label": label})
+        elif ref_type == "screenshot":
+            screenshot_key = raw.get("screenshotKey")
+            # Tenant isolation: refuse a screenshot key outside this thread's own org prefix,
+            # same idea as avatar_storage._parse_owned_avatar_url.
+            owned_prefix = f"chat_images/{org_id}/"
+            if (
+                not isinstance(screenshot_key, str)
+                or not screenshot_key.startswith(owned_prefix)
+                or len(screenshot_key) <= len(owned_prefix)
+            ):
+                raise ValidationError("A screenshot reference must include a valid 'screenshotKey'")
+            references.append({"type": "screenshot", "screenshotKey": screenshot_key, "label": label})
         else:
             url = raw.get("url")
             if not isinstance(url, str) or not url.strip():

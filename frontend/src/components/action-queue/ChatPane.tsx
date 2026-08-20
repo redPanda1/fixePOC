@@ -73,7 +73,7 @@ export default function ChatPane({
                 {message.references.length > 0 && (
                   <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap' }}>
                     {message.references.map((ref, index) =>
-                      ref.type === 'receipt' ? (
+                      ref.type === 'receipt' || ref.type === 'screenshot' ? (
                         <Box
                           key={index}
                           component="img"

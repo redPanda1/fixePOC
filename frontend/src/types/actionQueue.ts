@@ -24,7 +24,7 @@ export interface MessageOption {
 }
 
 export interface ResolvedReference {
-  type: 'receipt' | 'link';
+  type: 'receipt' | 'link' | 'screenshot';
   url: string | null;
   thumbnailUrl?: string | null;
   label: string | null;
@@ -32,11 +32,12 @@ export interface ResolvedReference {
 }
 
 export interface ReferenceInput {
-  type: 'receipt' | 'link';
+  type: 'receipt' | 'link' | 'screenshot';
   receiptId?: string;
   personId?: string;
   url?: string;
   label?: string;
+  screenshotKey?: string;
 }
 
 export interface ThreadMessage {

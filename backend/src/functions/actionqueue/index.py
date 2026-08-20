@@ -1,6 +1,7 @@
 import json
 
 from add_message import handle_add_message
+from create_chat_image_upload_url import handle_create_chat_image_upload_url
 from create_thread import handle_create_thread
 from get_thread import handle_get_thread
 from list_org_receipts import handle_list_org_receipts
@@ -40,6 +41,8 @@ def handler(event, _context):
 
     if route_key == "POST /action-queue/threads":
         return handle_create_thread(person_id, groups, body)
+    if route_key == "POST /action-queue/chat-images/upload-url":
+        return handle_create_chat_image_upload_url(groups, body)
     if route_key == "POST /action-queue/threads/{threadId}/messages":
         return handle_add_message(path_params["threadId"], person_id, org_id, groups, body)
     if route_key == "POST /action-queue/threads/{threadId}/messages/{messageId}/select":

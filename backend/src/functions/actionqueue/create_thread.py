@@ -18,7 +18,7 @@ def handle_create_thread(person_id: str, groups: list[str], body: dict[str, Any]
         subject = validate_text(body.get("subject"), "subject", 200)
         content = validate_text(body.get("body"), "body", 4000)
         entry_type = validate_entry_type(body.get("entryType"))
-        references = validate_references(body.get("references"))
+        references = validate_references(body.get("references"), org_id)
         options = validate_options(body.get("options"))
     except ValidationError as exc:
         return json_response(400, {"message": str(exc)})

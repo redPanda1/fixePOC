@@ -27,7 +27,7 @@ def handle_add_message(
 
     try:
         content = validate_text(body.get("content"), "content", 4000)
-        references = validate_references(body.get("references"))
+        references = validate_references(body.get("references"), item["orgId"])
         options = validate_options(body.get("options"))
     except ValidationError as exc:
         return json_response(400, {"message": str(exc)})

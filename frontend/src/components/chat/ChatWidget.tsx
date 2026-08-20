@@ -31,7 +31,7 @@ export default function ChatWidget() {
   if (location.pathname === '/chat') return null;
 
   return (
-    <>
+    <Box data-chat-widget-root sx={{ display: 'contents' }}>
       <Fab
         color="secondary"
         onClick={() => setOpen((o) => !o)}
@@ -96,7 +96,7 @@ export default function ChatWidget() {
           ) : (
             <>
               <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 2, pt: 2, minHeight: 0 }}>
-                <NewQuestionForm form={newQuestionForm} />
+                <NewQuestionForm form={newQuestionForm} referencesMode="screenshot" />
               </Box>
               <Box
                 sx={{
@@ -124,6 +124,6 @@ export default function ChatWidget() {
           )}
         </Paper>
       )}
-    </>
+    </Box>
   );
 }

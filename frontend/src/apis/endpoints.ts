@@ -86,7 +86,7 @@ export function createAvatarUploadUrl(payload: CreateAvatarUploadUrlPayload) {
 // axiosApiClient (which would prefix apiBaseUrl and attach a Bearer token).
 export async function uploadFileToPresignedUrl(
   uploadUrl: string,
-  file: File,
+  file: Blob,
   headers: Record<string, string>,
 ): Promise<void> {
   await axios.put(uploadUrl, file, { headers });
@@ -157,6 +157,24 @@ export function setThreadStatus(threadId: string, payload: SetThreadStatusReques
 
 export function renderVerdict(threadId: string, payload: RenderVerdictRequest) {
   return apiRequest<ThreadResponse>(`/action-queue/threads/${threadId}/verdict`, {
+    method: 'POST',
+    body: payload,
+  });
+}
+
+export interface CreateChatImageUploadUrlPayload {
+  orgId: string;
+  contentType: string;
+}
+
+export interface ChatImageUploadUrlResponse {
+  upload_url: string;
+  key: string;
+  expires_in: number;
+}
+
+export function createChatImageUploadUrl(payload: CreateChatImageUploadUrlPayload) {
+  return apiRequest<ChatImageUploadUrlResponse>('/action-queue/chat-images/upload-url', {
     method: 'POST',
     body: payload,
   });

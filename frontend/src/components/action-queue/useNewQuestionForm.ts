@@ -25,6 +25,10 @@ export function useNewQuestionForm(onCreated: () => void) {
   const [options, setOptions] = useState<OptionRow[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Bumped on every reset so components that keep their own local state derived from
+  // `references` (e.g. ScreenshotReferenceList's capture previews) can key off it to
+  // remount and start clean, instead of syncing state in an effect.
+  const [resetKey, setResetKey] = useState(0);
 
   useEffect(() => {
     if (organizationsListStatus === 'idle') {
@@ -42,6 +46,7 @@ export function useNewQuestionForm(onCreated: () => void) {
     setReferences([]);
     setOptions([]);
     setSubmitError(null);
+    setResetKey((key) => key + 1);
   };
 
   const addOptionRow = () => {
@@ -99,6 +104,7 @@ export function useNewQuestionForm(onCreated: () => void) {
     pickerOpen,
     setPickerOpen,
     submitError,
+    resetKey,
     organizations,
     selectedOrg,
     addOptionRow,

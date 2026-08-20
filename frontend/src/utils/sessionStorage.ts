@@ -23,7 +23,7 @@ function isStoredTokenMaterial(value: unknown): value is StoredTokenMaterial {
 }
 
 export function readStoredTokenMaterial(): StoredTokenMaterial | null {
-  const rawValue = window.sessionStorage.getItem(TOKEN_MATERIAL_STORAGE_KEY);
+  const rawValue = window.localStorage.getItem(TOKEN_MATERIAL_STORAGE_KEY);
   if (!rawValue) return null;
 
   try {
@@ -35,11 +35,11 @@ export function readStoredTokenMaterial(): StoredTokenMaterial | null {
 }
 
 export function storeTokenMaterial(tokenMaterial: StoredTokenMaterial): void {
-  window.sessionStorage.setItem(TOKEN_MATERIAL_STORAGE_KEY, JSON.stringify(tokenMaterial));
+  window.localStorage.setItem(TOKEN_MATERIAL_STORAGE_KEY, JSON.stringify(tokenMaterial));
 }
 
 export function clearStoredAuthToken(): void {
-  window.sessionStorage.removeItem(TOKEN_MATERIAL_STORAGE_KEY);
+  window.localStorage.removeItem(TOKEN_MATERIAL_STORAGE_KEY);
 }
 
 export function readStoredReceipts(): ReceiptSummary[] | null {

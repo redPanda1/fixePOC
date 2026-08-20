@@ -6,7 +6,7 @@ resolve_s3 = true
 s3_prefix = "fixeTest"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "StageName=\"dev\" ClaudeModelId=\"us.anthropic.claude-sonnet-4-5-20250929-v1:0\" NovaModelId=\"us.amazon.nova-lite-v1:0\" AppBaseUrl=\"http://localhost:5173\" NotificationEmailFrom=\"simon@oldredpanda.com\" FcmServiceAccountSecretArn=\"arn:aws:secretsmanager:us-east-1:819527464446:secret:fixe/dev/fcm-service-account-tpTHRQ\""
+parameter_overrides = "StageName=\"dev\" ClaudeModelId=\"us.anthropic.claude-sonnet-4-5-20250929-v1:0\" NovaModelId=\"us.amazon.nova-lite-v1:0\" AppBaseUrl=\"https://simon50.com\" NotificationEmailFrom=\"simon@oldredpanda.com\" FcmServiceAccountSecretArn=\"arn:aws:secretsmanager:us-east-1:819527464446:secret:fixe/dev/fcm-service-account-tpTHRQ\""
 image_repositories = []
 profile = "shPersonal"
 
